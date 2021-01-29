@@ -61,7 +61,11 @@ class SaveLocal(Storage):
         return DriverUtils.create_file_name((file_root, file_ext), self.name_uuid_len)
 
     def get_available_name(self, name, max_length=None):
-        name = DriverUtils.create_file_name(name, self.name_uuid_len)
+        # TODO fix if upload_to is exist
+        dir_name, file_name = os.path.split(name)
+        # file_root, file_ext = os.path.splitext(file_name)
+        name = DriverUtils.create_file_name(file_name, self.name_uuid_len)
+        name = dir_name + name
         name = self.location(name)
         name = DriverUtils.clean_name(name)
         return self.fs.get_available_name(name)
@@ -132,15 +136,9 @@ class SaveS3(Storage):
         return split_url.geturl()
 
 
-@deconstructible
-class SaveCLoudFlare(Storage):
-    pass
-
-
 class SaveDrivers(Enum):
     local = SaveLocal
     s3 = SaveS3
-    cf = SaveCLoudFlare
 
 
 class CustomStorage:
