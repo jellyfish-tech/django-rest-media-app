@@ -2,13 +2,13 @@ from typing import IO, Union
 
 from django.core.files.base import ContentFile
 
-from ..models import Media
+from django.db.models import Model
 
 
 def save_file(
-    file: Union[IO, ContentFile], filepath: Union[callable, str], filename: str
-) -> Media:
-    file_instance = Media()
+    model_name, file: Union[IO, ContentFile], filepath: Union[callable, str], filename: str
+) -> Model:
+    file_instance = model_name()
     file_instance.file.save(name=filename, content=file, upload_to=filepath)
     file_instance.save()
     return file_instance

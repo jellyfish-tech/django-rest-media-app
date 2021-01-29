@@ -11,8 +11,6 @@ class GenericFile(FieldFile):
     def save(self, name, content, save=False, upload_to=None):
         if upload_to:
             name = self.generate_filename(self.instance, name, upload_to)
-
-        print(self.storage)
         self.name = self.storage.save(
             name, content, max_length=self.field.max_length
         )
@@ -22,12 +20,6 @@ class GenericFile(FieldFile):
     def generate_filename(
         self, instance, filename, upload_to: Union[str, callable] = ""
     ):
-        """
-        Apply (if callable) or prepend (if a string) upload_to to the filename,
-        then delegate further processing of the name to the storage backend.
-        Until the storage layer, all file paths are expected to be Unix style
-        (with forward slashes).
-        """
         if callable(upload_to):
             filename = upload_to(instance, filename)
         else:
