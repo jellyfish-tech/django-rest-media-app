@@ -1,0 +1,8 @@
+virt/
+.idea/
+__pycache__/
+*.pyc
+db.sqlite3
+*.egg-info
+dist/
+
