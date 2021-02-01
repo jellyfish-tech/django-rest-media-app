@@ -7,10 +7,26 @@ from django.db.models import Model
 from ..models import Media
 
 
-def save_file(model, file: Union[IO, ContentFile], filename: str, filepath=None) -> Model:
-    file_instance = model()
-    file_instance.file.save(name=filename, content=file, upload_to=filepath)
-    file_instance.save()
+def save_file(model, file, filename: str, upload_to=None, save=True):
+    """
+        Method for saving files in case of one GenericFileField.
+        ::params
+            model - your model class for creating or instance for updating
+            file - content
+            filename - name of the file
+            upload_to - path for uploading to
+            save - bool. If True - model will be saved, else - not.
+        ::returns
+            Model instance
+    """
+
+    if isinstance(model, Media):
+        file_instance = model
+    else:
+        file_instance = model()
+    file_instance.file.save(name=filename, content=file, upload_to=upload_to)
+    if save:
+        file_instance.save()
     return file_instance
 
 
@@ -18,7 +34,7 @@ def save_multy_files(model, fields_data: dict, save=True):
     """
         Method for saving files in case of multiple GenericFileField.
         ::params
-            model - your model class for saving or instance for updating
+            model - your model class for creating or instance for updating
             fields_data - dict with the next structure:
                 fields_data = {
                     '<field name>': {

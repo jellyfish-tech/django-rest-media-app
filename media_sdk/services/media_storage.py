@@ -46,7 +46,13 @@ class DriverUtils:
             max_length = 6
         if isinstance(name, tuple):
             name = ''.join(name)
-        return ''.join([str(uuid.uuid4().hex[:max_length]), name])
+        dirname, name = posixpath.split(name)
+        name = ''.join([str(uuid.uuid4().hex[:max_length]), name])
+        return posixpath.join(dirname, name)
+
+    @staticmethod
+    def save_updated(path):
+        pass
 
 
 @deconstructible
@@ -61,11 +67,9 @@ class SaveLocal(Storage):
         return DriverUtils.create_file_name((file_root, file_ext), self.name_uuid_len)
 
     def get_available_name(self, name, max_length=None):
-        # TODO fix if upload_to is exist
         dir_name, file_name = os.path.split(name)
-        # file_root, file_ext = os.path.splitext(file_name)
         name = DriverUtils.create_file_name(file_name, self.name_uuid_len)
-        name = dir_name + name
+        name = posixpath.join(dir_name, name)
         name = self.location(name)
         name = DriverUtils.clean_name(name)
         return self.fs.get_available_name(name)
@@ -98,7 +102,7 @@ class SaveS3(Storage):
             raise SuspiciousOperation("Attempted access to '%s' denied." %
                                       name)
         while self.exists(name):
-            self.available_name(start_name)
+            self.get_available_name(start_name)
         return name
 
     def exists(self, name):
@@ -109,6 +113,7 @@ class SaveS3(Storage):
             return False
 
     def _save(self, name, content):
+        print('SAVE')
         obj = self.s3_bucket.Object(name)
         content.seek(0, os.SEEK_SET)
         content = DriverUtils.compress_content(content)

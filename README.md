@@ -64,4 +64,28 @@ media-sdk
          1. Inherite from Media class
          2. Create field GenericFileField and name it "file"
 
-      GenericFileField takes one arg "tag" [<model tag> in configs see above]
+         GenericFileField takes one arg "tag" [<model tag> in configs see above]
+
+      Functions:
+      
+      Each method has it's own doc string
+   
+         Module provides functions for comfortable saving:
+         
+            from media_sdk import save_file, save_multy_files
+
+            save_file - will be usefull in case of saving only one file.
+            save_multy_files - will be usefull in case of saving multiple files.
+               It has a more complex argument structure and requires precise names.
+
+7. Cautions
+
+   Notice one thing. Methods presented above, have "upload_to" property. 
+   Be careful using this property and admin panel.
+   Admin panel - defines location for saving using "location" setting (see STORAGE_OPTIONS above).
+   While using provided methods, you also use this setting, difference is adding "upload_to"
+   property to the path.
+   So, there are two ways to salve it:
+      1) Not use "upload_to" property in this methods, and just add it in the "location" setting.
+      2) Use only methods, and not admin panel.
+         

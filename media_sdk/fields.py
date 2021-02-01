@@ -23,8 +23,7 @@ class GenericFile(FieldFile):
         if callable(upload_to):
             filename = upload_to(instance, filename)
         else:
-            dirname = datetime.datetime.now().strftime(str(upload_to))
-            filename = posixpath.join(dirname, filename)
+            filename = posixpath.join(upload_to, filename)
         return self.storage.generate_filename(filename)
 
 
