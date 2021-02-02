@@ -1,19 +1,14 @@
-from typing import IO, Union
-
-from django.core.files.base import ContentFile
-
-from django.db.models import Model
-
 from ..models import Media
 
 
-def save_file(model, file, filename: str, upload_to=None, save=True):
+def save_file(model, file, filename: str, tag: str, upload_to=None, save=True):
     """
         Method for saving files in case of one GenericFileField.
         ::params
             model - your model class for creating or instance for updating
             file - content
             filename - name of the file
+            tag - tag of the GenericFileField in your model
             upload_to - path for uploading to
             save - bool. If True - model will be saved, else - not.
         ::returns
@@ -24,7 +19,10 @@ def save_file(model, file, filename: str, upload_to=None, save=True):
         file_instance = model
     else:
         file_instance = model()
-    file_instance.file.save(name=filename, content=file, upload_to=upload_to)
+
+    result_field = file_instance.get_generic_file_field_by_tag(tag)
+    if result_field is not None:
+        result_field.save(name=filename, content=file, upload_to=upload_to)
     if save:
         file_instance.save()
     return file_instance
@@ -37,7 +35,7 @@ def save_multy_files(model, fields_data: dict, save=True):
             model - your model class for creating or instance for updating
             fields_data - dict with the next structure:
                 fields_data = {
-                    '<field name>': {
+                    '<field tag>': {
                         'name': '<filename: str>', [required]
                         'content': <file: ContentFile, IO>, [required]
                         'upload_to': <path-like or callable function: str, callable> [optional]
@@ -53,11 +51,11 @@ def save_multy_files(model, fields_data: dict, save=True):
     else:
         file_instance = model()
 
-    for field in fields_data:
-        field_ins = getattr(file_instance, field, None)
-        if field_ins is None:
+    for field_tag in fields_data:
+        result_field = file_instance.get_generic_file_field_by_tag(field_tag)
+        if result_field is None:
             continue
-        field_ins.save(**fields_data[field])
+        result_field.save(**fields_data[field_tag])
     if save:
         file_instance.save()
     return file_instance

@@ -4,15 +4,21 @@ from django.utils.encoding import force_bytes
 from django.core.files.storage import Storage
 from django.utils.deconstruct import deconstructible
 from django.conf import settings
-from urllib.parse import parse_qsl, urlsplit
+from urllib.parse import parse_qsl, urlsplit, urljoin
+
 import boto3
 from botocore.exceptions import ClientError
 from gzip import GzipFile
+
 from enum import Enum
 import posixpath
 import uuid
 import os
 import io
+
+from tusclient import client
+from tusclient.storage.filestorage import FileStorage
+from tusclient.exceptions import TusUploadFailed, TusCommunicationError
 
 
 class DriverUtils:
@@ -50,10 +56,6 @@ class DriverUtils:
         name = ''.join([str(uuid.uuid4().hex[:max_length]), name])
         return posixpath.join(dirname, name)
 
-    @staticmethod
-    def save_updated(path):
-        pass
-
 
 @deconstructible
 class SaveLocal(Storage):
@@ -80,6 +82,12 @@ class SaveLocal(Storage):
 
     def url(self, name):
         return self.fs.url(name)
+
+    def delete(self, name):
+        try:
+            os.remove(posixpath.join(settings.MEDIA_ROOT, name))
+        except OSError as ose:
+            print(f'File "{ose.filename}" does not exist')
 
 
 @deconstructible
@@ -113,7 +121,6 @@ class SaveS3(Storage):
             return False
 
     def _save(self, name, content):
-        print('SAVE')
         obj = self.s3_bucket.Object(name)
         content.seek(0, os.SEEK_SET)
         content = DriverUtils.compress_content(content)
@@ -140,10 +147,85 @@ class SaveS3(Storage):
         split_url = split_url._replace(query="&".join(joined_qs))
         return split_url.geturl()
 
+    def delete(self, name):
+        self.s3_resource.Object(self.bucket_name, name).delete()
+
+
+@deconstructible
+class TusStorage(Storage):
+
+    def __init__(self, configs):
+        self.sets = configs
+        self.name_uuid_len = self.sets.get('name_uuid_len', 5)
+        self.my_client = client.TusClient(url=self.sets['url'],
+                                          headers=self.sets.get('headers', {}))
+
+        self.uploader = None
+
+        self.rename_tries = self.sets.get('rename_tries', 5)
+        self.storing_file = self.sets.get('storing_file', 'tus_url_storage')
+
+        self.opt_conf = dict(chunk_size=self.sets.get('chunk_size', 500),
+                             retries=self.sets.get('retries', 5),
+                             retry_delay=self.sets.get('retry_delay', 10),
+                             upload_checksum=self.sets.get('upload_checksum', True)
+                             )
+
+    def url(self, name):
+        return name
+
+    def get_available_name(self, name, max_length=None):
+        name = DriverUtils.create_file_name(name, self.name_uuid_len)
+        return name
+
+    def save(self, name, content, max_length=None):
+        metadata = {'filename': name}
+        if self.storing_file:
+            storing = FileStorage(self.storing_file)
+            store_url = True
+        else:
+            storing = None
+            store_url = False
+
+        rename_tries = self.rename_tries
+
+        while True:
+            try:
+                rename_tries -= 1
+                self.uploader = self.my_client.uploader(file_stream=content,
+                                                        metadata=metadata,
+                                                        store_url=store_url,
+                                                        url_storage=storing,
+                                                        **self.opt_conf)
+                break
+            except TusCommunicationError as tus_comm:
+                if tus_comm.status_code == 409:
+                    if rename_tries <= 0:
+                        self.name_uuid_len += 1
+                        rename_tries = self.rename_tries
+                    metadata['filename'] = self.get_available_name(name)
+
+        try:
+            self.uploader.upload()
+        except TusUploadFailed as tus_upl:
+            pass
+        else:
+            if self.uploader.store_url:
+                self.uploader.url_storage.remove_item(
+                    self.uploader.fingerprinter.get_fingerprint(
+                        self.uploader.get_file_stream()
+                    )
+                )
+            return metadata['filename']
+
+    def delete(self, name):
+        pass
+
 
 class SaveDrivers(Enum):
     local = SaveLocal
     s3 = SaveS3
+    tus = TusStorage
 
 
 class CustomStorage:

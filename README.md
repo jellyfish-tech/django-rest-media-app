@@ -17,15 +17,23 @@ media-sdk
         It has next structure:
    
          STORAGE_OPTIONS = {
-             <model tag>: {
-                 'driver': <name of prefered driver>, ['local', 's3']
+             <field tag>: {
+                 'driver': <name of prefered driver>, ['local' #1, 's3' #2, 'tus' #3]
                  'configs': {
-                     'location': <see explanation below>, [both]
-                     'bucket': <your bucket name>, [s3]
-                     'name_uuid_len': <int. len of "coded" prefix of file>, [both]
+                     'location': <see explanation below>, [1,2]
+                     'bucket': <your bucket name>, [2]
+                     'name_uuid_len': <int. len of "coded" prefix of file>, [1,2,3]
+                     'url': <server url>, [3]
+                     'chunk_size': <int>, [3]
+                     'headers': <headers dict to include in requests>, [3]
+                     'rename_tries': <amount of tries to rename file before increasing uuid len int>, [3]
+                     'storing_file': <name of the storing uploads urls str>, [3]
+                     'retries': <amount of times to reconect int>, [3]
+                     'retry_delay': <delay in ms between reconect tries int>, [3]
+                     'upload_checksum': <turning the cheksum bool>, [3]
                  }
              },
-             <model tag>: {...}
+             <field tag>: {...}
          }
    
 
