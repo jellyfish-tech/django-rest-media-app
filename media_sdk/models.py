@@ -33,8 +33,25 @@ class Media(models.Model):
                     return getattr(self, field.name)
         return None
 
+    def get_generic_file_fields(self):
+        gff = []
+        for field in self._meta.fields:
+            if isinstance(field, GenericFileField):
+                gff.append(field.name)
+        return gff
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if self.pk is not None:
+            old_self = self.__class__.objects.get(pk=self.pk)
+            for field in self.get_generic_file_fields():
+                old_file = getattr(old_self, field)
+                new_file = getattr(self, field)
+                if old_file and new_file != old_file:
+                    old_file.delete(False)
+        return super(Media, self).save(force_insert=False, force_update=False, using=None, update_fields=None)
+
     def delete(self, using=None, keep_parents=False):
-        # TODO make if no settings ('local' storage MEDIA_ROOT path by default)
+        # FIXME make if no settings ('local' storage MEDIA_ROOT path by default)
         for field_tag in settings.STORAGE_OPTIONS:
             file_field = self.get_generic_file_field_by_tag(field_tag)
             if not file_field:
