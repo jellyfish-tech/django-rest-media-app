@@ -16,16 +16,16 @@ def save_file(model, file, filename: str, tag: str, upload_to=None, save=True):
     """
 
     if isinstance(model, Media):
-        file_instance = model
+        model_instance = model
     else:
-        file_instance = model()
+        model_instance = model()
 
-    result_field = file_instance.get_generic_file_field_by_tag(tag)
+    result_field = model_instance.get_generic_file_field_by_tag(tag)
     if result_field is not None:
         result_field.save(name=filename, content=file, upload_to=upload_to)
     if save:
-        file_instance.save()
-    return file_instance
+        model_instance.save()
+    return model_instance
 
 
 def save_multy_files(model, fields_data: dict, save=True):
@@ -47,15 +47,15 @@ def save_multy_files(model, fields_data: dict, save=True):
     """
 
     if isinstance(model, Media):
-        file_instance = model
+        model_instance = model
     else:
-        file_instance = model()
+        model_instance = model()
 
     for field_tag in fields_data:
-        result_field = file_instance.get_generic_file_field_by_tag(field_tag)
+        result_field = model_instance.get_generic_file_field_by_tag(field_tag)
         if result_field is None:
             continue
         result_field.save(**fields_data[field_tag])
     if save:
-        file_instance.save()
-    return file_instance
+        model_instance.save()
+    return model_instance

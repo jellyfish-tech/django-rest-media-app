@@ -4,8 +4,6 @@ from django.db import models
 
 from .fields import GenericFileField
 
-from django.conf import settings
-
 
 class MediaQuerySet(models.QuerySet):
     def get_media_url_or_none(self, file_pk: str) -> Optional[str]:
@@ -37,6 +35,8 @@ class Media(models.Model):
         gff = []
         for field in self._meta.fields:
             if isinstance(field, GenericFileField):
+                # TODO maybe better append object.
+                #  It'd prepend using "getattr" somewhere. And name I'll be able get anytime?
                 gff.append(field.name)
         return gff
 
@@ -51,12 +51,8 @@ class Media(models.Model):
         return super(Media, self).save(force_insert=False, force_update=False, using=None, update_fields=None)
 
     def delete(self, using=None, keep_parents=False):
-        # FIXME make if no settings ('local' storage MEDIA_ROOT path by default)
-        for field_tag in settings.STORAGE_OPTIONS:
-            file_field = self.get_generic_file_field_by_tag(field_tag)
-            if not file_field:
-                continue
-            file_field.delete()
+        for file_field_name in self.get_generic_file_fields():
+            getattr(self, file_field_name).delete()
         super(Media, self).delete(using=None, keep_parents=False)
 
     def __str__(self):
