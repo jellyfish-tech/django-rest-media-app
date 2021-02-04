@@ -35,24 +35,24 @@ class Media(models.Model):
         gff = []
         for field in self._meta.fields:
             if isinstance(field, GenericFileField):
-                # TODO maybe better append object.
-                #  It'd prepend using "getattr" somewhere. And name I'll be able get anytime?
-                gff.append(field.name)
+                gff.append(field)
         return gff
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.pk is not None:
             old_self = self.__class__.objects.get(pk=self.pk)
             for field in self.get_generic_file_fields():
-                old_file = getattr(old_self, field)
-                new_file = getattr(self, field)
-                if old_file and new_file != old_file:
-                    old_file.delete(False)
+                old_stored_file = getattr(old_self, field.name)
+                new_storing_file = getattr(self, field.name)
+                if old_stored_file and new_storing_file != old_stored_file and old_stored_file != field.default:
+                    old_stored_file.delete(False)
         return super(Media, self).save(force_insert=False, force_update=False, using=None, update_fields=None)
 
     def delete(self, using=None, keep_parents=False):
-        for file_field_name in self.get_generic_file_fields():
-            getattr(self, file_field_name).delete()
+        for file_field in self.get_generic_file_fields():
+            field = getattr(self, file_field.name)
+            if field.name != file_field.default:
+                field.delete(save=False)
         super(Media, self).delete(using=None, keep_parents=False)
 
     def __str__(self):

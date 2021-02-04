@@ -1,7 +1,7 @@
 from ..models import Media
 
 
-def save_file(model, file, filename: str, tag: str, upload_to=None, save=True):
+def save_file(model, content, filename: str, tag: str, upload_to=None, save=True):
     """
         Method for saving files in case of one GenericFileField.
         ::params
@@ -22,7 +22,7 @@ def save_file(model, file, filename: str, tag: str, upload_to=None, save=True):
 
     result_field = model_instance.get_generic_file_field_by_tag(tag)
     if result_field is not None:
-        result_field.save(name=filename, content=file, upload_to=upload_to)
+        result_field.save(name=filename, content=content, upload_to=upload_to)
     if save:
         model_instance.save()
     return model_instance

@@ -84,7 +84,6 @@ class SaveLocal(Storage):
         return self.fs.url(name)
 
     def delete(self, name):
-        # FIXME call 2 times ??
         try:
             os.remove(posixpath.join(settings.MEDIA_ROOT, name))
         except OSError as ose:
