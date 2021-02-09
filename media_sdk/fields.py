@@ -2,11 +2,11 @@ import datetime
 import posixpath
 from typing import Union
 
+from django.conf import settings
 from django.db import models
 from django.db.models.fields.files import FieldFile
-from .services.media_storage import CustomStorage
 
-from django.conf import settings
+from .services.media_storage import CustomStorage
 
 
 def get_default_image(tag):
@@ -15,8 +15,6 @@ def get_default_image(tag):
         confs = model.get('configs')
         if confs:
             return confs.get('default')
-        else:
-            return None
     return None
 
 

@@ -32,11 +32,11 @@ class Media(models.Model):
         return None
 
     def get_generic_file_fields(self):
-        gff = []
+        generic_file_fields = []
         for field in self._meta.fields:
             if isinstance(field, GenericFileField):
-                gff.append(field)
-        return gff
+                generic_file_fields.append(field)
+        return generic_file_fields
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.pk is not None:

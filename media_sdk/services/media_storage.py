@@ -1,24 +1,21 @@
-from django.core.files.storage import FileSystemStorage
-from django.core.exceptions import SuspiciousOperation
-from django.utils.encoding import force_bytes
-from django.core.files.storage import Storage
-from django.utils.deconstruct import deconstructible
-from django.conf import settings
-from urllib.parse import parse_qsl, urlsplit, urljoin
+import io
+import os
+import posixpath
+import uuid
+from enum import Enum
+from gzip import GzipFile
+from urllib.parse import parse_qsl, urlsplit
 
 import boto3
 from botocore.exceptions import ClientError
-from gzip import GzipFile
-
-from enum import Enum
-import posixpath
-import uuid
-import os
-import io
-
+from django.conf import settings
+from django.core.exceptions import SuspiciousOperation
+from django.core.files.storage import FileSystemStorage, Storage
+from django.utils.deconstruct import deconstructible
+from django.utils.encoding import force_bytes
 from tusclient import client
+from tusclient.exceptions import TusCommunicationError, TusUploadFailed
 from tusclient.storage.filestorage import FileStorage
-from tusclient.exceptions import TusUploadFailed, TusCommunicationError
 
 
 class DriverUtils:
