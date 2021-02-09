@@ -4,8 +4,6 @@ from django.db import models
 
 from .fields import GenericFileField
 
-from django.conf import settings
-
 
 class MediaQuerySet(models.QuerySet):
     def get_media_url_or_none(self, file_pk: str) -> Optional[str]:
@@ -34,29 +32,27 @@ class Media(models.Model):
         return None
 
     def get_generic_file_fields(self):
-        gff = []
+        generic_file_fields = []
         for field in self._meta.fields:
             if isinstance(field, GenericFileField):
-                gff.append(field.name)
-        return gff
+                generic_file_fields.append(field)
+        return generic_file_fields
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.pk is not None:
             old_self = self.__class__.objects.get(pk=self.pk)
             for field in self.get_generic_file_fields():
-                old_file = getattr(old_self, field)
-                new_file = getattr(self, field)
-                if old_file and new_file != old_file:
-                    old_file.delete(False)
+                old_stored_file = getattr(old_self, field.name)
+                new_storing_file = getattr(self, field.name)
+                if old_stored_file and new_storing_file != old_stored_file and old_stored_file != field.default:
+                    old_stored_file.delete(False)
         return super(Media, self).save(force_insert=False, force_update=False, using=None, update_fields=None)
 
     def delete(self, using=None, keep_parents=False):
-        # FIXME make if no settings ('local' storage MEDIA_ROOT path by default)
-        for field_tag in settings.STORAGE_OPTIONS:
-            file_field = self.get_generic_file_field_by_tag(field_tag)
-            if not file_field:
-                continue
-            file_field.delete()
+        for file_field in self.get_generic_file_fields():
+            field = getattr(self, file_field.name)
+            if field.name != file_field.default:
+                field.delete(save=False)
         super(Media, self).delete(using=None, keep_parents=False)
 
     def __str__(self):
