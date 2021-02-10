@@ -7,7 +7,12 @@ media-sdk
 
 2. Include the polls URLconf in your project urls.py like this
 
-         pass yet
+         Package includes few usefull urls:
+
+            "media-url/<str:model_name>/<str:ff_name>/<int:pk>/" - allows to retrieve media url for this resource in 
+               'media' and 'rest' forms
+            "retrieve/<str:model_name>/<str:ff_name>/<int:pk>/" - allows to view media resource
+            "download/<str:model_name>/<str:ff_name>/<int:pk>/" - allows to download media resource
 
 3. In settings.py
 
