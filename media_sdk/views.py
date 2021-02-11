@@ -13,20 +13,20 @@ from .utils import get_field_field, get_all_media, get_model_media, get_model_fi
 
 @require_GET
 def retrieve_all_media_urls(request: WSGIRequest) -> JsonResponse:
-    response = get_all_media(request.get_raw_uri())
-    return JsonResponse(response, status=200)
+    response, status = get_all_media(request.get_raw_uri())
+    return JsonResponse(response, status=status)
 
 
 @require_GET
 def retrieve_model_media_urls(request: WSGIRequest, model_name) -> JsonResponse:
-    response = get_model_media(request.get_raw_uri(), model_name)
-    return JsonResponse(response, status=200)
+    response, status = get_model_media(request.get_raw_uri(), model_name)
+    return JsonResponse(response, status=status)
 
 
 @require_GET
 def retrieve_model_field_media_urls(request: WSGIRequest, model_name, ff_tag) -> JsonResponse:
-    response = get_model_field_media(request.get_raw_uri(), model_name, ff_tag)
-    return JsonResponse(response, status=200)
+    response, status = get_model_field_media(request.get_raw_uri(), model_name, ff_tag)
+    return JsonResponse(response, status=status)
 
 
 @require_GET
@@ -64,6 +64,8 @@ def retrieve_media_file(request, model_name, ff_tag, pk):
     elif storage.__class__.__name__ == 'SaveS3':
         file_url = storage.retrieve(file_field.name)
         return redirect(file_url)
+    else:
+        return JsonResponse({'status': 'Retrieving not allowed'}, status=401)
 
 
 @require_GET
@@ -78,6 +80,8 @@ def download_media_file(request, model_name, ff_tag, pk):
     elif storage.__class__.__name__ == 'SaveS3':
         file_url = storage.download(file_field.name)
         return redirect(file_url)
+    else:
+        return JsonResponse({'status': 'Retrieving not allowed'}, status=401)
 
 
 @require_GET

@@ -8,9 +8,12 @@ media-sdk
 2. Include the polls URLconf in your project urls.py like this
 
          Package includes few usefull urls:
-
+            "media-url/" - get json for all exists models in DOWNLOADS [see below]
+            "media-url/<str:model_name>/" - get json for choosen model in DOWNLOADS [see below]
+            "media-url/<str:model_name>/<str:ff_tag>/"  - get json for choosen model and choosen file field in DOWNLOADS [see below]
             "media-url/<str:model_name>/<str:ff_name>/<int:pk>/" - allows to retrieve media url for this resource in 
                'media' and 'rest' forms
+   
             "retrieve/<str:model_name>/<str:ff_name>/<int:pk>/" - allows to view media resource
             "download/<str:model_name>/<str:ff_name>/<int:pk>/" - allows to download media resource
 
@@ -54,6 +57,15 @@ media-sdk
                 now = datetime.now()
                 name = f"EXAMPLES/{now.year}/{now.month}/{now.day}/{"{request.user}/" if request}{name}"
                 return name
+
+   |
+
+         3.3 DOWNLOADS - is your setting for models, that files are allowed to be downloaded
+            It has next structure:
+   
+            DOWNLOADS = {
+               <your model name, that will be used in urls>: <your model doted path>
+            }
         
         
     
@@ -65,7 +77,23 @@ media-sdk
 
 5. Response examples
 
-         pass yet
+      All "media-url" responses have almost simmilar response, except specific request
+
+      {
+         "<model url name>_model":
+            {
+               "<field tag>_field": [<list of available specific urls>],
+               "<<field tag_field>": [<list of available specific urls>]
+            },
+         "<model url name>_model":
+            {
+               "<field tag>_field": [<list of available specific urls>],
+               "<<field tag>_field": [<list of available specific urls>]
+            },
+      }
+   
+      Depend on params, the response will be more specific e.g: specified model, specified field.
+         
 
 
 6. How to use
