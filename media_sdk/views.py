@@ -18,42 +18,31 @@ def retrieve_all_media_urls(request: WSGIRequest) -> JsonResponse:
 
 
 @require_GET
-def retrieve_model_media_urls(request: WSGIRequest, model_name) -> JsonResponse:
+def retrieve_model_media_urls(request: WSGIRequest, model_name: str) -> JsonResponse:
     response, status = get_model_media(request.get_raw_uri(), model_name)
     return JsonResponse(response, status=status)
 
 
 @require_GET
-def retrieve_model_field_media_urls(request: WSGIRequest, model_name, ff_tag) -> JsonResponse:
+def retrieve_model_field_media_urls(request: WSGIRequest, model_name: str, ff_tag: str) -> JsonResponse:
     response, status = get_model_field_media(request.get_raw_uri(), model_name, ff_tag)
     return JsonResponse(response, status=status)
 
 
 @require_GET
-def retrieve_specific_media_url(request: WSGIRequest, model_name, ff_tag, pk) -> JsonResponse:
+def retrieve_specific_media_url(request: WSGIRequest, model_name: str, ff_tag: str, pk: int) -> JsonResponse:
     file_field = get_field_field(model_name, ff_tag, pk)
     if isinstance(file_field, JsonResponse):
         return file_field
+    raw_uri = request.get_raw_uri()
     url = file_field.url
-    return JsonResponse(
-        {"media_url": urljoin(request.get_raw_uri(), url),
-         "rest_url": urljoin(
-             request.get_raw_uri(),
-             reverse(
-                 retrieve_media_file,
-                 kwargs=dict(
-                         model_name=model_name,
-                         ff_tag=ff_tag,
-                         pk=pk
-                     )
-                 )
-             )
-         }
-    )
+    rest_url = reverse(retrieve_media_file, kwargs=dict(model_name=model_name, ff_tag=ff_tag, pk=pk))
+    response = {"media_url": urljoin(raw_uri, url), "rest_url": urljoin(raw_uri, rest_url)}
+    return JsonResponse(response, status=200)
 
 
 @require_GET
-def retrieve_media_file(request, model_name, ff_tag, pk):
+def retrieve_media_file(request: WSGIRequest, model_name: str, ff_tag: str, pk: int):
     file_field = get_field_field(model_name, ff_tag, pk)
     if isinstance(file_field, JsonResponse):
         return file_field
@@ -69,7 +58,7 @@ def retrieve_media_file(request, model_name, ff_tag, pk):
 
 
 @require_GET
-def download_media_file(request, model_name, ff_tag, pk):
+def download_media_file(request: WSGIRequest, model_name: str, ff_tag: str, pk: int):
     file_field = get_field_field(model_name, ff_tag, pk)
     if isinstance(file_field, JsonResponse):
         return file_field
@@ -85,7 +74,7 @@ def download_media_file(request, model_name, ff_tag, pk):
 
 
 @require_GET
-def download_stream(request):
+def download_stream(request: WSGIRequest):
     fs = open('MEDIA/crisis.avi', 'rb')
     content_type = 'application/octet-stream'
     range_header = request.META.get('HTTP_RANGE', None)

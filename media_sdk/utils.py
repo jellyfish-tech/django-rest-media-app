@@ -2,17 +2,20 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.utils.module_loading import import_string
 from urllib.parse import urljoin
+from django.db.models import Model
+from typing import Text, Tuple, Union, Optional, Type
+from .fields import GenericFileField
 
 
-def make_media_url(origin, model, ff_tag, pk):
+def make_media_url(origin: Text, model: Text, ff_tag: Text, pk: int) -> Text:
     return urljoin(origin, f'{model}/{ff_tag}/{pk}/')
 
 
-def get_model_info(path_model_name=None):
+def get_model_info(path_model_name: Optional[str] = None) -> Union[Tuple[None, None], Tuple[dict, Type[Model]]]:
     if not path_model_name:
         try:
             models = settings.DOWNLOADS.items()
-        except (AttributeError, KeyError):
+        except AttributeError:
             return None, None
         response_dict = {}
         return response_dict, models
@@ -24,9 +27,9 @@ def get_model_info(path_model_name=None):
     return response_dict, model
 
 
-def get_all_media(origin):
+def get_all_media(origin: Text) -> Tuple[dict, int]:
     response_dict, models = get_model_info()
-    if not response_dict and not models:
+    if not models:
         return {'status': 'Nothing found'}, 404
     for path_model_name, model_path in models:
         model = import_string(model_path)
@@ -40,9 +43,9 @@ def get_all_media(origin):
     return response_dict, 200
 
 
-def get_model_media(origin, path_model_name):
+def get_model_media(origin: Text, path_model_name: Text) -> Tuple[dict, int]:
     response_dict, model = get_model_info(path_model_name)
-    if not response_dict and not model:
+    if not model:
         return {'status': 'Nothing found'}, 404
     instances = model.objects.all()
     model_response_dict = response_dict[path_model_name + '_model'] = {}
@@ -53,9 +56,9 @@ def get_model_media(origin, path_model_name):
     return response_dict, 200
 
 
-def get_model_field_media(origin, path_model_name, ff_tag):
+def get_model_field_media(origin: Text, path_model_name: Text, ff_tag: Text) -> Tuple[dict, int]:
     response_dict, model = get_model_info(path_model_name)
-    if not response_dict and not model:
+    if not model:
         return {'status': 'Nothing found'}, 404
     instances = model.objects.all()
     model_response_dict = response_dict[path_model_name + '_model'] = {}
@@ -67,7 +70,7 @@ def get_model_field_media(origin, path_model_name, ff_tag):
     return response_dict, 200
 
 
-def get_field_field(model_name, ff_tag, pk):
+def get_field_field(model_name: Text, ff_tag: Text, pk: int) -> Union[JsonResponse, GenericFileField]:
     try:
         model = import_string(settings.DOWNLOADS[model_name])
     except ImportError:
