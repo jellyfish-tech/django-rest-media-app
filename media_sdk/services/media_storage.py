@@ -4,6 +4,7 @@ import posixpath
 import uuid
 from enum import Enum
 from gzip import GzipFile
+from mimetypes import guess_type
 from urllib.parse import parse_qsl, urlsplit
 
 import boto3
@@ -80,11 +81,22 @@ class SaveLocal(Storage):
     def url(self, name):
         return self.fs.url(name)
 
+    def path(self, name):
+        return self.fs.path(name)
+
     def delete(self, name):
         try:
             os.remove(posixpath.join(settings.MEDIA_ROOT, name))
         except OSError as ose:
             print(f'File "{ose.filename}" does not exist')
+
+    def download(self, name):
+        file = open(self.path(name), 'rb')
+        filename = posixpath.basename(name)
+        return file, filename
+
+    def retrieve(self, name):
+        return self.download(name)
 
 
 @deconstructible
@@ -94,6 +106,10 @@ class SaveS3(Storage):
         self.bucket_name = self.sets['bucket']
         self.name_uuid_len = self.sets.get('name_uuid_len', None)
         self.location = self.sets.get('location', lambda name: name)
+        self.privat = self.sets.get('privat', None)
+        if self.privat == '' or not isinstance(self.privat, str):
+            self.privat = None
+        self.public = self.sets.get('public', 'Public')
         self.s3_resource = boto3.resource('s3')
         self.s3_bucket = self.s3_resource.Bucket(self.bucket_name)
 
@@ -108,6 +124,10 @@ class SaveS3(Storage):
                                       name)
         while self.exists(name):
             self.get_available_name(start_name)
+        if self.privat:
+            name = posixpath.join(self.privat, name)
+        else:
+            name = posixpath.join(self.public, name)
         return name
 
     def exists(self, name):
@@ -123,6 +143,10 @@ class SaveS3(Storage):
         content = DriverUtils.compress_content(content)
         params = dict()
         params['ContentEncoding'] = 'gzip'
+        params['ContentType'] = guess_type(name)[0]
+        params['ContentDisposition'] = 'inline'
+        if not self.privat:
+            params['ACL'] = 'public-read'
         obj.upload_fileobj(content, ExtraArgs=params)
         return name
 
@@ -146,6 +170,19 @@ class SaveS3(Storage):
 
     def delete(self, name):
         self.s3_resource.Object(self.bucket_name, name).delete()
+
+    def download(self, name):
+        params = dict()
+        params['Bucket'] = self.s3_bucket.name
+        params['Key'] = name
+        params['ResponseContentDisposition'] = 'attach'
+        return self.s3_bucket.meta.client.generate_presigned_url('get_object', Params=params)
+
+    def retrieve(self, name):
+        params = dict()
+        params['Bucket'] = self.s3_bucket.name
+        params['Key'] = name
+        return self.s3_bucket.meta.client.generate_presigned_url('get_object', Params=params)
 
 
 @deconstructible

@@ -24,7 +24,7 @@ class Media(models.Model):
 
     objects = MediaManager.from_queryset(MediaQuerySet)()
 
-    def get_generic_file_field_by_tag(self, tag):
+    def get_generic_file_field_by_tag(self, tag: str):
         for field in self._meta.fields:
             if isinstance(field, GenericFileField):
                 if field.tag == tag:
