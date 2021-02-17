@@ -13,26 +13,25 @@ def make_media_url(origin: Text, model: Text, ff_tag: Text, pk: int) -> Text:
     return urljoin(origin, f'{model}/{ff_tag}/{pk}/')
 
 
-def get_model_info(path_model_name: Optional[str] = None) -> Union[Tuple[None, None], Tuple[dict, Type[Model]]]:
+def get_model_info(path_model_name: Optional[str] = None) -> Union[None, Type[Model]]:
     if not path_model_name:
         try:
             models = settings.DOWNLOADS.items()
         except AttributeError:
-            return None, None
-        response_dict = {}
-        return response_dict, models
+            return None
+        return models
     try:
         model = import_string(settings.DOWNLOADS[path_model_name])
     except (AttributeError, KeyError):
-        return None, None
-    response_dict = {}
-    return response_dict, model
+        return None
+    return model
 
 
 def get_all_media(origin: Text) -> Tuple[dict, int]:
-    response_dict, models = get_model_info()
+    models = get_model_info()
     if not models:
         return {'status': 'Nothing found'}, 404
+    response_dict = {}
     for path_model_name, model_path in models:
         model = import_string(model_path)
         instances = model.objects.all()
@@ -46,9 +45,10 @@ def get_all_media(origin: Text) -> Tuple[dict, int]:
 
 
 def get_model_media(origin: Text, path_model_name: Text) -> Tuple[dict, int]:
-    response_dict, model = get_model_info(path_model_name)
+    model = get_model_info(path_model_name)
     if not model:
         return {'status': 'Nothing found'}, 404
+    response_dict = {}
     instances = model.objects.all()
     model_response_dict = response_dict[path_model_name + '_model'] = {}
     for file_field in model().get_generic_file_fields():
@@ -59,9 +59,10 @@ def get_model_media(origin: Text, path_model_name: Text) -> Tuple[dict, int]:
 
 
 def get_model_field_media(origin: Text, path_model_name: Text, ff_tag: Text) -> Tuple[dict, int]:
-    response_dict, model = get_model_info(path_model_name)
+    model = get_model_info(path_model_name)
     if not model:
         return {'status': 'Nothing found'}, 404
+    response_dict = {}
     instances = model.objects.all()
     model_response_dict = response_dict[path_model_name + '_model'] = {}
     if model().get_generic_file_field_by_tag(ff_tag) is None:
