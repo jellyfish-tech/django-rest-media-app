@@ -2,9 +2,9 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
 
-from .views import (download_media_file, retrieve_media_file,
-                    retrieve_all_media_urls, retrieve_model_media_urls,
-                    retrieve_model_field_media_urls, retrieve_specific_media_url)
+from .views import (download_media_file, retrieve_all_media_urls,
+                    retrieve_media_file, retrieve_model_field_media_urls,
+                    retrieve_model_media_urls, retrieve_specific_media_url)
 
 urlpatterns = [
     path("media-url/", retrieve_all_media_urls),

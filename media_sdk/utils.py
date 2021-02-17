@@ -1,9 +1,11 @@
+from typing import Optional, Text, Tuple, Type, Union
+from urllib.parse import urljoin
+
 from django.conf import settings
+from django.db.models import Model
 from django.http import JsonResponse
 from django.utils.module_loading import import_string
-from urllib.parse import urljoin
-from django.db.models import Model
-from typing import Text, Tuple, Union, Optional, Type
+
 from .fields import GenericFileField
 
 

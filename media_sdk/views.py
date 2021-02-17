@@ -8,7 +8,8 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 
-from .utils import get_field_field, get_all_media, get_model_media, get_model_field_media
+from .utils import (get_all_media, get_field_field, get_model_field_media,
+                    get_model_media)
 
 
 @require_GET
